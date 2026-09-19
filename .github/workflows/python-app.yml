@@ -1,0 +1,47 @@
+name: Library Bot
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+# تشغيل نسخة واحدة فقط من البوت.
+# إذا بدأ تشغيل جديد، يتم إلغاء التشغيل القديم.
+concurrency:
+  group: library-bot
+  cancel-in-progress: true
+# actions: write مطلوبة حتى يستطيع الـ workflow تشغيل نفسه من جديد.
+permissions:
+  contents: read
+  actions: write
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # هذه هي المكتبات المستخدمة مباشرة في botd.py.
+      # لا يحتاج هذا الـ workflow إلى requirements.txt.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "python-telegram-bot>=20,<23" requests
+      - name: Run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          timeout --signal=TERM --kill-after=30s 345m python -u botd.py
+      # إعادة التشغيل تلقائياً قبل انتهاء الحد الأقصى لتشغيل GitHub Actions.
+      # github.token توكن تلقائي من GitHub، ولا يحتاج إلى إضافته في Secrets.
+      - name: Auto-restart bot
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run bot.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$GITHUB_REF_NAME"
