@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      # هذه هي المكتبات المستخدمة مباشرة في botd.py.
+      # هذه هي المكتبات المستخدمة مباشرة في bot.py.
       # لا يحتاج هذا الـ workflow إلى requirements.txt.
       - name: Install dependencies
         run: |
@@ -34,7 +34,7 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
-          timeout --signal=TERM --kill-after=30s 345m python -u botd.py
+          timeout --signal=TERM --kill-after=30s 345m python -u bot.py
       # إعادة التشغيل تلقائياً قبل انتهاء الحد الأقصى لتشغيل GitHub Actions.
       # github.token توكن تلقائي من GitHub، ولا يحتاج إلى إضافته في Secrets.
       - name: Auto-restart bot
